@@ -6,6 +6,13 @@ pipeline {
     }
   }
 
+  environment {
+    SONAR_URL = "http://54.227.5.227:9000"
+    GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
+    GIT_USER_NAME = "sreyajanjanam"
+    DOCKER_IMAGE = "sreya1215/ultimate-cicd:${BUILD_NUMBER}"
+  }
+
   stages {
 
     stage('Checkout') {
@@ -33,16 +40,13 @@ pipeline {
     }
 
     stage('Static Code Analysis') {
-      environment {
-        SONAR_URL = "http://54.227.5.227:9000"
-      }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
           sh '''
             cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
             mvn sonar:sonar \
               -Dsonar.host.url=${SONAR_URL} \
-              -Dsonar.login=$SONAR_AUTH_TOKEN \
+              -Dsonar.login=${SONAR_AUTH_TOKEN} \
               -Dsonar.projectKey=spring-boot-app \
               -Dsonar.plugins.downloadOnlyRequired=true
           '''
@@ -51,9 +55,6 @@ pipeline {
     }
 
     stage('Build and Push Docker Image') {
-      environment {
-        DOCKER_IMAGE = "yourdockerhubusername/ultimate-cicd:${BUILD_NUMBER}"
-      }
       steps {
         script {
           def dockerImage = docker.image("${DOCKER_IMAGE}")
@@ -69,11 +70,7 @@ pipeline {
     }
 
     stage('Update Deployment File') {
-      agent { label 'master' } // Run on Jenkins host, not inside container
-      environment {
-        GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
-        GIT_USER_NAME = "sreyajanjanam"
-      }
+      agent { label 'master' } // Run this part on Jenkins host, not inside container
       steps {
         withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
           sh '''
