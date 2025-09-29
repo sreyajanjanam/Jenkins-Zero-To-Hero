@@ -69,7 +69,7 @@ pipeline {
     }
 
     stage('Update Deployment File') {
-      agent { label 'master' } // Run this part on Jenkins host, not inside container
+      agent any // Run this part on Jenkins host, not inside container
       steps {
         withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
           sh '''
